@@ -1,0 +1,23 @@
+## Interface: 120100
+## Title: Gold Gambit
+## Notes: Group gambling host, roll resolution, and persistent statistics.
+## Notes-frFR: Hôte de parties de groupe, résolution des jets et statistiques persistantes.
+## Version: 0.1.0
+## SavedVariables: GoldGambitDB
+
+Bootstrap.lua
+Localization\Locale.lua
+Localization\enUS.lua
+Localization\frFR.lua
+Core\Util.lua
+Core\Database.lua
+Core\Chat.lua
+Core\RollParser.lua
+Core\Stats.lua
+Core\Game.lua
+UI\Components.lua
+UI\GameTab.lua
+UI\StatsTab.lua
+UI\SettingsTab.lua
+UI\MainFrame.lua
+Core\Addon.lua
