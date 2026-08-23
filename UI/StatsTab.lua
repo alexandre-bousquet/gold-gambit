@@ -94,6 +94,16 @@ function GG.UI:CreateStatsTab(parent)
     end)
     tab.channelDropdown:SetPoint("TOPLEFT", 250, -27)
 
+    tab.sendButton = self:CreateButton(tab, 78, 28, "", function()
+        GG.Sync:SendPeriod(GG.Database:GetSettings().statsPeriod or "ALL")
+    end)
+    tab.sendButton:SetPoint("BOTTOMLEFT", 4, 6)
+
+    tab.receiveButton = self:CreateButton(tab, 106, 28, "", function()
+        GG.Sync:ToggleReceiving()
+    end)
+    tab.receiveButton:SetPoint("LEFT", tab.sendButton, "RIGHT", 4, 0)
+
     tab.publishButton = self:CreateButton(tab, 120, 28, "", function()
         local settings = GG.Database:GetSettings()
         GG.Stats:Publish(settings.statsPeriod, settings.statsChannel)
@@ -102,7 +112,7 @@ function GG.UI:CreateStatsTab(parent)
 
     tab.tablePanel = self:CreatePanel(tab)
     tab.tablePanel:SetPoint("TOPLEFT", 0, -78)
-    tab.tablePanel:SetPoint("BOTTOMRIGHT", 0, 34)
+    tab.tablePanel:SetPoint("BOTTOMRIGHT", 0, 74)
 
     tab.headers = {}
     for _, column in ipairs(columns) do
@@ -116,14 +126,14 @@ function GG.UI:CreateStatsTab(parent)
         }
     end
 
-    tab.statsList = self:CreateScrollList(tab.tablePanel, 706, 333, 25, createStatsRow)
+    tab.statsList = self:CreateScrollList(tab.tablePanel, 706, 303, 25, createStatsRow)
     tab.statsList:SetPoint("TOPLEFT", 5, -30)
 
     tab.emptyText = self:CreateLabel(tab.tablePanel, "GameFontDisable")
     tab.emptyText:SetPoint("CENTER", 0, -5)
 
     tab.summaryText = self:CreateLabel(tab, "GameFontHighlightSmall")
-    tab.summaryText:SetPoint("BOTTOMLEFT", 4, 8)
+    tab.summaryText:SetPoint("BOTTOMLEFT", 4, 45)
 
     function tab:RebuildDropdowns()
         local settings = GG.Database:GetSettings()
@@ -149,6 +159,7 @@ function GG.UI:CreateStatsTab(parent)
     function tab:ApplyLocale()
         self.periodLabel:SetText(GG:L("STATS_PERIOD"))
         self.channelLabel:SetText(GG:L("CHAT_CHANNEL"))
+        self.sendButton:SetText(GG:L("SYNC_SEND"))
         self.publishButton:SetText(GG:L("PUBLISH"))
         self.emptyText:SetText(GG:L("NO_STATS"))
         for _, header in pairs(self.headers) do
@@ -165,9 +176,16 @@ function GG.UI:CreateStatsTab(parent)
         self.emptyText:SetShown(#ranking == 0)
         self.summaryText:SetText(GG:L("GAMES_COUNT", gamesCount))
         GG:SetEnabled(self.publishButton, #ranking > 0)
+        self.receiveButton:SetText(GG:L(GG.Sync:IsReceiving() and "SYNC_RECEIVE_ON" or "SYNC_RECEIVE_OFF"))
+
+        local hasGroupChannel = GG.Chat:GetAutomaticChannel() ~= nil
+        GG:SetEnabled(self.sendButton, gamesCount > 0 and hasGroupChannel and not GG.Sync:IsSending())
+        GG:SetEnabled(self.receiveButton, hasGroupChannel)
     end
 
     GG:RegisterCallback("HISTORY_CHANGED", tab, "Refresh")
     GG:RegisterCallback("DATABASE_RESET", tab, "ApplyLocale")
+    GG:RegisterCallback("SYNC_STATE_CHANGED", tab, "Refresh")
+    GG:RegisterCallback("GROUP_CHANGED", tab, "Refresh")
     return tab
 end

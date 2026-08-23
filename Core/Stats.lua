@@ -63,6 +63,16 @@ function Stats:GetPeriodLabel(period)
     return GG:L("PERIOD_ALL")
 end
 
+function Stats:GetGamesForPeriod(period)
+    local games = {}
+    for _, game in ipairs(GG.Database:GetHistory()) do
+        if isGameInPeriod(game, period) then
+            table.insert(games, game)
+        end
+    end
+    return games
+end
+
 function Stats:BuildRanking(period)
     local aggregate = {}
     local gamesCount = 0

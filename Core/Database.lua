@@ -125,6 +125,48 @@ function Database:AddGame(game)
     GG:Fire("HISTORY_CHANGED", game)
 end
 
+function Database:HasGameAt(completedAt)
+    completedAt = tonumber(completedAt)
+    if not completedAt then
+        return false
+    end
+
+    for _, game in ipairs(self.data.history) do
+        if tonumber(game.completedAt) == completedAt then
+            return true
+        end
+    end
+    return false
+end
+
+function Database:InsertGamesIfMissing(games)
+    local knownTimestamps = {}
+    for _, game in ipairs(self.data.history) do
+        local completedAt = tonumber(game.completedAt)
+        if completedAt then
+            knownTimestamps[completedAt] = true
+        end
+    end
+
+    local imported = 0
+    local skipped = 0
+    for _, game in ipairs(games or {}) do
+        local completedAt = tonumber(game.completedAt)
+        if completedAt and not knownTimestamps[completedAt] then
+            table.insert(self.data.history, game)
+            knownTimestamps[completedAt] = true
+            imported = imported + 1
+        else
+            skipped = skipped + 1
+        end
+    end
+
+    if imported > 0 then
+        GG:Fire("HISTORY_CHANGED")
+    end
+    return imported, skipped
+end
+
 function Database:ResetStats()
     self.data.history = {}
     _G.GoldGambitDB.history = self.data.history

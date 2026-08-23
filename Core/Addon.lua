@@ -17,12 +17,14 @@ function Addon:Initialize()
     GG.Locale:Set(GG.Database:GetSettings().locale)
     GG.RollParser:Initialize()
     GG.Game:Initialize()
+    GG.Sync:Initialize()
     GG.UI:CreateMainFrame()
 
     for _, eventName in ipairs(chatEvents) do
         self:RegisterEvent(eventName)
     end
     self:RegisterEvent("CHAT_MSG_SYSTEM")
+    self:RegisterEvent("CHAT_MSG_ADDON")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
 
     SLASH_GOLDGAMBIT1 = "/goldgambit"
@@ -54,6 +56,11 @@ Addon:SetScript("OnEvent", function(self, eventName, ...)
 
     if eventName == "CHAT_MSG_SYSTEM" then
         GG.Game:OnSystemMessage(...)
+        return
+    end
+
+    if eventName == "CHAT_MSG_ADDON" then
+        GG.Sync:OnAddonMessage(...)
         return
     end
 

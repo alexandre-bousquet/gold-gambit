@@ -107,6 +107,7 @@ loadAddonFile("Core/Database.lua")
 loadAddonFile("Core/Chat.lua")
 loadAddonFile("Core/RollParser.lua")
 loadAddonFile("Core/Stats.lua")
+loadAddonFile("Core/Sync.lua")
 loadAddonFile("Core/Game.lua")
 
 GoldGambitDB = nil
@@ -160,6 +161,83 @@ assert(#GoldGambitDB.history == 1)
 assert(GoldGambitDB.history[1].winner == "Alice-TestRealm")
 assert(GoldGambitDB.history[1].loser == "Bob-TestRealm")
 assert(GoldGambitDB.history[1].payout == 8000)
+assert(#GG.Stats:GetGamesForPeriod("ALL") == 1)
+
+local serializedGame = GG.Sync:SerializeGame(GoldGambitDB.history[1])
+local receivedGame = GG.Sync:DeserializeGame(serializedGame)
+assert(receivedGame.completedAt == GoldGambitDB.history[1].completedAt)
+assert(receivedGame.day == GoldGambitDB.history[1].day)
+assert(GG.Sync:ValidateGame(receivedGame))
+local importedGames, skippedGames = GG.Database:InsertGamesIfMissing({ receivedGame })
+assert(importedGames == 0)
+assert(skippedGames == 1)
+assert(#GoldGambitDB.history == 1)
+
+receivedGame.id = receivedGame.id .. "-received"
+receivedGame.completedAt = receivedGame.completedAt + 86400
+receivedGame.day = GG.Util:GetTodayKey(receivedGame.completedAt)
+assert(GG.Sync:ValidateGame(receivedGame))
+importedGames, skippedGames = GG.Database:InsertGamesIfMissing({ receivedGame })
+assert(importedGames == 1)
+assert(skippedGames == 0)
+assert(GG.Database:HasGameAt(receivedGame.completedAt))
+table.remove(GoldGambitDB.history)
+assert(#GoldGambitDB.history == 1)
+
+local discoveryTimer
+local addonMessages = {}
+ChatThrottleLib = {
+    SendAddonMessage = function(_, _, prefix, message, channel, _, _, callback)
+        table.insert(addonMessages, { prefix = prefix, message = message, channel = channel })
+        if callback then
+            callback(nil, true, 0)
+        end
+    end,
+}
+local originalTimerAfter = C_Timer.After
+C_Timer.After = function(_, callback)
+    discoveryTimer = callback
+end
+GG.Sync.sending = false
+GG.Sync.receiving = false
+GG.Sync.pendingRequests = {}
+GG.Sync.incomingTransfers = {}
+assert(GG.Sync:SendPeriod("ALL"))
+local requestId = addonMessages[1].message:match("^Q|(.+)$")
+assert(requestId)
+GG.Sync:OnAddonMessage("GGSYNC1", "L|" .. requestId, "INSTANCE_CHAT", "Bob-TestRealm")
+discoveryTimer()
+assert(addonMessages[2].message:match("^B|"))
+assert(addonMessages[#addonMessages].message:match("^E|"))
+assert(not GG.Sync:IsSending())
+
+C_Timer.After = function() end
+GG.Sync.receiving = true
+GG.Sync.incomingTransfers = {}
+local transferPayload = GG.Sync:SerializeGame(receivedGame)
+local function receiveTransfer(transferId)
+    GG.Sync:BeginIncomingTransfer("Bob-TestRealm", transferId, 1, "ALL")
+    local chunkCount = math.ceil(#transferPayload / 180)
+    for chunkIndex = 1, chunkCount do
+        local first = ((chunkIndex - 1) * 180) + 1
+        GG.Sync:StoreIncomingChunk(
+            "Bob-TestRealm",
+            transferId,
+            1,
+            chunkIndex,
+            chunkCount,
+            transferPayload:sub(first, first + 179)
+        )
+    end
+    GG.Sync:FinishIncomingTransfer("Bob-TestRealm", transferId, 1)
+end
+receiveTransfer("test-transfer-1")
+assert(#GoldGambitDB.history == 2)
+receiveTransfer("test-transfer-2")
+assert(#GoldGambitDB.history == 2)
+table.remove(GoldGambitDB.history)
+GG.Sync.receiving = false
+C_Timer.After = originalTimerAfter
 
 local ranking, gamesCount = GG.Stats:BuildRanking("ALL")
 assert(gamesCount == 1)
