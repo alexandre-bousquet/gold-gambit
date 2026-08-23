@@ -10,6 +10,10 @@ local function createDefaults()
             locale = GG.Locale:DetectDefault(),
             gameName = "Gold Gambit",
             autoJoin = true,
+            minimapButton = {
+                hide = true,
+                minimapPos = 225,
+            },
             statsPeriod = "ALL",
             statsChannel = "AUTO",
             lastAmount = 10000,
@@ -33,11 +37,32 @@ local function mergeMissing(target, defaults)
     end
 end
 
+local function migrateMinimapSettings(settings)
+    if type(settings) ~= "table" then
+        return
+    end
+
+    if type(settings.minimapButton) ~= "table" then
+        local hide = true
+        if type(settings.showMinimapButton) == "boolean" then
+            hide = not settings.showMinimapButton
+        end
+        settings.minimapButton = {
+            hide = hide,
+            minimapPos = tonumber(settings.minimapButtonAngle) or 225,
+        }
+    end
+
+    settings.showMinimapButton = nil
+    settings.minimapButtonAngle = nil
+end
+
 function Database:Initialize()
     if type(_G.GoldGambitDB) ~= "table" then
         _G.GoldGambitDB = createDefaults()
     end
 
+    migrateMinimapSettings(_G.GoldGambitDB.settings)
     mergeMissing(_G.GoldGambitDB, createDefaults())
 
     if type(_G.GoldGambitDB.settings) ~= "table" then
@@ -58,6 +83,13 @@ function Database:Initialize()
     if type(settings.autoJoin) ~= "boolean" then
         settings.autoJoin = true
     end
+    if type(settings.minimapButton) ~= "table" then
+        settings.minimapButton = createDefaults().settings.minimapButton
+    end
+    if type(settings.minimapButton.hide) ~= "boolean" then
+        settings.minimapButton.hide = true
+    end
+    settings.minimapButton.minimapPos = (tonumber(settings.minimapButton.minimapPos) or 225) % 360
     if settings.statsPeriod ~= "ALL" and settings.statsPeriod ~= "PATCH" and settings.statsPeriod ~= "TODAY" then
         settings.statsPeriod = "ALL"
     end

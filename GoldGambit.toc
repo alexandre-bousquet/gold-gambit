@@ -3,7 +3,13 @@
 ## Notes: Group gambling host, roll resolution, and persistent statistics.
 ## Notes-frFR: Hôte de parties de groupe, résolution des jets et statistiques persistantes.
 ## Version: 0.1.0
+## IconTexture: Interface\AddOns\GoldGambit\Media\GoldGambitIcon.png
 ## SavedVariables: GoldGambitDB
+
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 
 Bootstrap.lua
 Localization\Locale.lua

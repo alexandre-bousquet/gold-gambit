@@ -48,9 +48,23 @@ function GG.UI:CreateSettingsTab(parent)
     end)
     tab.applyButton:SetPoint("LEFT", tab.nameEdit, "RIGHT", 12, 0)
 
+    tab.minimapPanel = self:CreatePanel(tab)
+    tab.minimapPanel:SetPoint("TOPLEFT", 0, -264)
+    tab.minimapPanel:SetPoint("TOPRIGHT", 0, -264)
+    tab.minimapPanel:SetHeight(76)
+
+    tab.minimapTitle = self:CreateLabel(tab.minimapPanel, "GameFontNormalLarge")
+    tab.minimapTitle:SetPoint("TOPLEFT", 16, -14)
+
+    tab.showMinimapButton = self:CreateCheckButton(tab.minimapPanel, "", function(check)
+        GG.Database:GetSettings().minimapButton.hide = not check:GetChecked()
+        GG:Fire("SETTINGS_CHANGED")
+    end)
+    tab.showMinimapButton:SetPoint("TOPLEFT", 16, -42)
+
     tab.resetPanel = self:CreatePanel(tab)
-    tab.resetPanel:SetPoint("TOPLEFT", 0, -264)
-    tab.resetPanel:SetPoint("TOPRIGHT", 0, -264)
+    tab.resetPanel:SetPoint("TOPLEFT", 0, -356)
+    tab.resetPanel:SetPoint("TOPRIGHT", 0, -356)
     tab.resetPanel:SetHeight(128)
 
     tab.resetTitle = self:CreateLabel(tab.resetPanel, "GameFontNormalLarge")
@@ -117,6 +131,8 @@ function GG.UI:CreateSettingsTab(parent)
         self.languageHelp:SetText(GG:L("LANGUAGE_HELP"))
         self.nameTitle:SetText(GG:L("GAME_NAME"))
         self.applyButton:SetText(GG:L("APPLY"))
+        self.minimapTitle:SetText(GG:L("MINIMAP_BUTTON"))
+        self.showMinimapButton.label:SetText(GG:L("SHOW_MINIMAP_BUTTON"))
         self.resetTitle:SetText(GG:L("RESET_ALL"))
         self.resetHelp:SetText(GG:L("RESET_HELP"))
         self.resetButton:SetText(GG:L("RESET_ALL"))
@@ -128,6 +144,7 @@ function GG.UI:CreateSettingsTab(parent)
         if not self.nameEdit:HasFocus() then
             self.nameEdit:SetText(settings.gameName or "Gold Gambit")
         end
+        self.showMinimapButton:SetChecked(not settings.minimapButton.hide)
         self:RefreshLanguageButtons()
     end
 

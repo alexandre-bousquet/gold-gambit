@@ -1,5 +1,44 @@
 local addonName, GG = ...
 
+local MINIMAP_LAUNCHER_NAME = "GoldGambit"
+local MINIMAP_ICON = "Interface\\AddOns\\" .. addonName .. "\\Media\\GoldGambitIcon.png"
+
+function GG.UI:RefreshMinimapButton()
+    if not self.MinimapButtonLibrary then
+        return
+    end
+
+    local settings = GG.Database:GetSettings()
+    self.MinimapButtonLibrary:Refresh(MINIMAP_LAUNCHER_NAME, settings.minimapButton)
+end
+
+function GG.UI:CreateMinimapButton()
+    local dataBroker = LibStub("LibDataBroker-1.1")
+    local iconLibrary = LibStub("LibDBIcon-1.0")
+    local launcher = dataBroker:NewDataObject(MINIMAP_LAUNCHER_NAME, {
+        type = "launcher",
+        label = GG.displayName,
+        icon = MINIMAP_ICON,
+        iconCoords = { 0, 1, 0, 1 },
+        OnClick = function(_, button)
+            if button == "LeftButton" then
+                GG.UI.MainFrame:Toggle()
+            end
+        end,
+        OnTooltipShow = function(tooltip)
+            local settings = GG.Database:GetSettings()
+            tooltip:AddLine(settings.gameName or GG.displayName)
+            tooltip:AddLine(GG:L("MINIMAP_TOOLTIP"), 1, 1, 1, true)
+        end,
+    })
+
+    iconLibrary:Register(MINIMAP_LAUNCHER_NAME, launcher, GG.Database:GetSettings().minimapButton)
+    self.MinimapButtonLibrary = iconLibrary
+    self.MinimapButton = iconLibrary:GetMinimapButton(MINIMAP_LAUNCHER_NAME)
+    GG:RegisterCallback("SETTINGS_CHANGED", self, "RefreshMinimapButton")
+    return self.MinimapButton
+end
+
 function GG.UI:CreateMainFrame()
     local frameName = addonName .. "MainFrame"
     local frame = CreateFrame("Frame", frameName, UIParent, "BasicFrameTemplateWithInset")
@@ -104,6 +143,7 @@ function GG.UI:CreateMainFrame()
 
     table.insert(UISpecialFrames, frameName)
     self.MainFrame = frame
+    self:CreateMinimapButton()
 
     GG:RegisterCallback("LOCALE_CHANGED", frame, "ApplyLocale")
     GG:RegisterCallback("SETTINGS_CHANGED", frame, "ApplyLocale")

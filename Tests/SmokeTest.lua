@@ -111,6 +111,18 @@ loadAddonFile("Core/Game.lua")
 
 GoldGambitDB = nil
 GG.Database:Initialize()
+assert(GoldGambitDB.settings.minimapButton.hide == true)
+assert(GoldGambitDB.settings.minimapButton.minimapPos == 225)
+
+GoldGambitDB.settings.minimapButton = nil
+GoldGambitDB.settings.showMinimapButton = true
+GoldGambitDB.settings.minimapButtonAngle = 90
+GG.Database:Initialize()
+assert(GoldGambitDB.settings.minimapButton.hide == false)
+assert(GoldGambitDB.settings.minimapButton.minimapPos == 90)
+assert(GoldGambitDB.settings.showMinimapButton == nil)
+assert(GoldGambitDB.settings.minimapButtonAngle == nil)
+
 GG.Locale:Set("enUS")
 GG.RollParser:Initialize()
 GG.Game:Initialize()
