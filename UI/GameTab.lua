@@ -73,10 +73,14 @@ function GG.UI:CreateGameTab(parent)
         { label = "10K", value = 10000 },
         { label = "50K", value = 50000 },
         { label = "100K", value = 100000 },
+        { label = "+10K", value = 10000, increment = true },
     }
     for index, preset in ipairs(presets) do
         local button = self:CreateButton(tab.setupPanel, 60, 24, preset.label, function()
-            tab.amountEdit:SetText(tostring(preset.value))
+            local amount = preset.increment
+                and math.min(tab.amountEdit:GetNumber() + preset.value, 1000000000)
+                or preset.value
+            tab.amountEdit:SetText(tostring(amount))
         end)
         button:SetPoint("LEFT", tab.amountEdit, "RIGHT", 65 + ((index - 1) * 65), 0)
         table.insert(tab.presetButtons, button)

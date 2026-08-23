@@ -12,6 +12,26 @@ local columns = {
     { key = "patron", label = "PATRON", x = 571, width = 110, align = "LEFT" },
 }
 
+local function offsetDropdownValue(dropdown, yOffset)
+    local text = dropdown.Text or dropdown:GetFontString()
+    if not text then
+        return
+    end
+
+    if not dropdown.valueTextAnchors then
+        dropdown.valueTextAnchors = {}
+        for index = 1, text:GetNumPoints() do
+            local point, relativeTo, relativePoint, x, y = text:GetPoint(index)
+            dropdown.valueTextAnchors[index] = { point, relativeTo, relativePoint, x, y }
+        end
+    end
+
+    text:ClearAllPoints()
+    for _, anchor in ipairs(dropdown.valueTextAnchors) do
+        text:SetPoint(anchor[1], anchor[2], anchor[3], anchor[4], anchor[5] + yOffset)
+    end
+end
+
 local function createStatsRow(parent, index)
     local row = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     row:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
@@ -113,6 +133,7 @@ function GG.UI:CreateStatsTab(parent)
             { value = "TODAY", text = GG:L("PERIOD_TODAY") },
         })
         self.periodDropdown:SetValue(settings.statsPeriod or "ALL", false)
+        offsetDropdownValue(self.periodDropdown, -2)
 
         self.channelDropdown:SetItems({
             { value = "AUTO", text = GG:L("CHANNEL_AUTO") },
@@ -122,6 +143,7 @@ function GG.UI:CreateStatsTab(parent)
             { value = "SAY", text = GG:L("CHANNEL_SAY") },
         })
         self.channelDropdown:SetValue(settings.statsChannel or "AUTO", false)
+        offsetDropdownValue(self.channelDropdown, -2)
     end
 
     function tab:ApplyLocale()
