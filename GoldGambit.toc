@@ -2,7 +2,7 @@
 ## Title: Gold Gambit
 ## Notes: Group gambling host, roll resolution, and persistent statistics.
 ## Notes-frFR: Hôte de parties de groupe, résolution des jets et statistiques persistantes.
-## Version: 0.2.1
+## Version: 0.4.1
 ## IconTexture: Interface\AddOns\GoldGambit\Media\GoldGambitIcon.png
 ## SavedVariables: GoldGambitDB
 
