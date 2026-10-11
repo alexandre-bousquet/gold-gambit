@@ -124,15 +124,30 @@ function Util:GetShortName(name)
     return name:match("^([^-]+)") or name
 end
 
+function Util:NamesEqual(left, right)
+    if type(left) ~= "string" or type(right) ~= "string" then
+        return false
+    end
+
+    if strcmputf8i then
+        return strcmputf8i(left, right) == 0
+    end
+
+    return left:lower() == right:lower()
+end
+
 function Util:GetGroupRoster()
     local roster = {}
-    local seen = {}
     local category = self:GetActiveGroupCategory()
 
     local function addUnit(unit)
         local fullName = self:GetUnitFullName(unit)
-        if fullName and not seen[fullName:lower()] then
-            seen[fullName:lower()] = true
+        if fullName then
+            for _, existingName in ipairs(roster) do
+                if self:NamesEqual(existingName, fullName) then
+                    return
+                end
+            end
             table.insert(roster, fullName)
         end
     end
@@ -159,20 +174,19 @@ function Util:ResolveGroupName(rawName)
         return nil
     end
 
-    if YOU and rawName:lower() == tostring(YOU):lower() then
+    if YOU and self:NamesEqual(rawName, tostring(YOU)) then
         return self:GetPlayerFullName()
     end
 
-    local rawLower = rawName:lower()
-    local rawShort = self:GetShortName(rawName):lower()
+    local rawShort = self:GetShortName(rawName)
     local shortMatches = {}
 
     for _, fullName in ipairs(self:GetGroupRoster()) do
-        if fullName:lower() == rawLower then
+        if self:NamesEqual(fullName, rawName) then
             return fullName
         end
 
-        if self:GetShortName(fullName):lower() == rawShort then
+        if self:NamesEqual(self:GetShortName(fullName), rawShort) then
             table.insert(shortMatches, fullName)
         end
     end

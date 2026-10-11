@@ -117,8 +117,10 @@ function Game:AddParticipant(rawName, silent)
     end
 
     local key = name:lower()
-    if self.session.participants[key] then
-        return false
+    for _, participant in pairs(self.session.participants) do
+        if GG.Util:NamesEqual(participant.name, name) then
+            return false
+        end
     end
 
     self.session.participants[key] = {
@@ -201,18 +203,19 @@ function Game:FindParticipant(rawName)
 
     local resolved = GG.Util:ResolveGroupName(rawName)
     if resolved then
-        local exact = self.session.participants[resolved:lower()]
-        if exact then
-            return resolved:lower(), exact
+        for key, participant in pairs(self.session.participants) do
+            if GG.Util:NamesEqual(participant.name, resolved) then
+                return key, participant
+            end
         end
     end
 
-    local rawShort = GG.Util:GetShortName(rawName):lower()
+    local rawShort = GG.Util:GetShortName(rawName)
     local matchKey
     local match
 
     for key, participant in pairs(self.session.participants) do
-        if GG.Util:GetShortName(participant.name):lower() == rawShort then
+        if GG.Util:NamesEqual(GG.Util:GetShortName(participant.name), rawShort) then
             if match then
                 return nil
             end

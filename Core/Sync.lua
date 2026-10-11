@@ -88,7 +88,7 @@ local function isSelf(sender)
     if type(sender) ~= "string" then
         return false
     end
-    return normalizeSender(sender):lower() == GG.Util:GetPlayerFullName():lower()
+    return GG.Util:NamesEqual(normalizeSender(sender), GG.Util:GetPlayerFullName())
 end
 
 local function isGroupMember(sender)
@@ -96,9 +96,9 @@ local function isGroupMember(sender)
         return false
     end
 
-    local normalized = normalizeSender(sender):lower()
+    local normalized = normalizeSender(sender)
     for _, name in ipairs(GG.Util:GetGroupRoster()) do
-        if name:lower() == normalized then
+        if GG.Util:NamesEqual(name, normalized) then
             return true
         end
     end
@@ -192,11 +192,12 @@ function Sync:ValidateGame(game)
         if type(name) ~= "string" or name == "" or #name > 128 then
             return false
         end
-        local normalizedName = name:lower()
-        if participantNames[normalizedName] then
-            return false
+        for _, existingName in ipairs(participantNames) do
+            if GG.Util:NamesEqual(existingName, name) then
+                return false
+            end
         end
-        participantNames[normalizedName] = true
+        table.insert(participantNames, name)
     end
 
     local highestValue = -1
@@ -208,11 +209,25 @@ function Sync:ValidateGame(game)
     local rolledNames = {}
     for _, roll in ipairs(game.rolls) do
         local value = tonumber(roll.value)
-        local normalizedName = type(roll.name) == "string" and roll.name:lower() or nil
-        if not normalizedName or not participantNames[normalizedName] or rolledNames[normalizedName] then
+        if type(roll.name) ~= "string" then
             return false
         end
-        rolledNames[normalizedName] = true
+        local isParticipant = false
+        for _, name in ipairs(participantNames) do
+            if GG.Util:NamesEqual(name, roll.name) then
+                isParticipant = true
+                break
+            end
+        end
+        if not isParticipant then
+            return false
+        end
+        for _, name in ipairs(rolledNames) do
+            if GG.Util:NamesEqual(name, roll.name) then
+                return false
+            end
+        end
+        table.insert(rolledNames, roll.name)
         if not value or value < 1 or value > game.amount or value ~= math.floor(value) then
             return false
         end
@@ -236,8 +251,8 @@ function Sync:ValidateGame(game)
 
     return highestCount == 1
         and lowestCount == 1
-        and game.winner == highestName
-        and game.loser == lowestName
+        and GG.Util:NamesEqual(game.winner, highestName)
+        and GG.Util:NamesEqual(game.loser, lowestName)
         and game.payout == highestValue - lowestValue
 end
 

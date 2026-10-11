@@ -36,6 +36,12 @@ end
 
 local function ensurePlayer(aggregate, name)
     if not aggregate[name] then
+        for existingName, player in pairs(aggregate) do
+            if GG.Util:NamesEqual(existingName, name) then
+                return player
+            end
+        end
+
         aggregate[name] = {
             name = name,
             games = 0,
